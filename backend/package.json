@@ -19,8 +19,8 @@
   },
   "scripts": {
     "start": "node app.js",
-    "dev": "C:\\OpenServer\\domains\\express-mesto-gha\\backend\\node_modules\\.bin\\nodemon app.js",
-    "lint": "npx eslint .."
+    "dev": "nodemon app.js",
+    "lint": "npx eslint ."
   },
   "devDependencies": {
     "eslint": "^8.14.0",

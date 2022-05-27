@@ -4,43 +4,40 @@ const mongoose = require("mongoose");
 
 const cookieParser = require("cookie-parser");
 
-const {celebrate, Joi, errors} = require("celebrate");
+const { celebrate, Joi, errors } = require("celebrate");
 
-const cors = require('cors');
+const cors = require("cors");
 
 const userRoutes = require("./routers/userRouter");
 const cardRoutes = require("./routers/cardRouter");
 
-const {auth} = require("./middlewares/auth");
-const {login, createUser, logout} = require("./controllers/userControllers");
-const {errorHandler} = require("./middlewares/errorHandler");
+const { auth } = require("./middlewares/auth");
+const { login, createUser, logout } = require("./controllers/userControllers");
+const { errorHandler } = require("./middlewares/errorHandler");
 
-const {ErrorNotFound} = require("./errors/ErrorNotFound");
-const {requestLogger, errorLogger} = require('./middlewares/logger');
+const { ErrorNotFound } = require("./errors/ErrorNotFound");
+const { requestLogger, errorLogger } = require("./middlewares/logger");
 
-const {PORT = 3000} = process.env;
+const { PORT = 3000 } = process.env;
 mongoose.connect("mongodb://localhost:27017/mestodb");
 const app = express();
 
-require('dotenv').config();
-console.log(process.env.NODE_ENV);
+require("dotenv").config();
 
 app.use(express.json());
 const corsOptions = {
-  origin: ['https://mesto-julia.nomoredomains.xyz','http://mesto-julia.nomoredomains.xyz', 'http://localhost:3000'],
+  origin: ["https://mesto-julia.nomoredomains.xyz", "http://mesto-julia.nomoredomains.xyz", "http://localhost:3000"],
   credentials: true,
 };
 
 app.use(cors(corsOptions));
 
-
 app.use(cookieParser());
 app.use(requestLogger);
 
-app.get('/crash-test', () => {
+app.get("/crash-test", () => {
   setTimeout(() => {
-    console.log("Server died");
-    throw new Error('Сервер сейчас упадёт');
+    throw new Error("Сервер сейчас упадёт");
   }, 0);
 });
 
@@ -60,14 +57,14 @@ app.post("/signup", celebrate({
     avatar: Joi.string().pattern(/^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/),
   }),
 }), createUser);
-app.post('/signout', logout);
+app.post("/signout", logout);
 
 app.use(auth);
 app.use("/users", userRoutes);
 app.use("/cards", cardRoutes);
 
 app.use((req, res, next) => {
-  next(new ErrorNotFound("Страница не найдена"))
+  next(new ErrorNotFound("Страница не найдена"));
 });
 app.use(errorLogger);
 app.use(errors());

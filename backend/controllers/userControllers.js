@@ -2,34 +2,29 @@ const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
-const {ErrorNotFound} = require("../errors/ErrorNotFound");
-const {ValidationError} = require("../errors/ValidationError");
-const {UnauthorizedError} = require("../errors/UnauthorizedError");
-const {ConflictError} = require("../errors/ConflictError");
-const JWT_KEY = 'jwt';
+const { ErrorNotFound } = require("../errors/ErrorNotFound");
+const { ValidationError } = require("../errors/ValidationError");
+const { UnauthorizedError } = require("../errors/UnauthorizedError");
+const { ConflictError } = require("../errors/ConflictError");
+
+const JWT_KEY = "jwt";
 const JWT_OPTIONS = {
   maxAge: 604800000,
   httpOnly: true,
   secure: true,
-  sameSite: 'none',
+  sameSite: "none",
 };
-
-
-
-const { NODE_ENV, JWT_SECRET } = process.env;
-
-
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send({data: users})).catch(next);
+    .then((users) => res.send({ data: users })).catch(next);
 };
 
 module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (user) {
-        res.send({data: user});
+        res.send({ data: user });
       } else {
         next(new ErrorNotFound("Пользователь по указанному _id не найден"));
       }
@@ -62,7 +57,7 @@ module.exports.createUser = (req, res, next) => {
           about: user.about,
           avatar: user.avatar,
         },
-      })
+      });
     })
       .catch((err) => {
         if (err.code === 11000) {
@@ -77,12 +72,12 @@ module.exports.createUser = (req, res, next) => {
 };
 
 module.exports.updateProfile = (req, res, next) => {
-  const {name, about} = req.body;
+  const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
-    {name, about},
-    {new: true, runValidators: true},
-  ).then((user) => res.status(200).send({data: user}))
+    { name, about },
+    { new: true, runValidators: true },
+  ).then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.name === "ValidationError") {
         next(new ValidationError("Переданы некорректные данные при обновлении профиля"));
@@ -95,12 +90,12 @@ module.exports.updateProfile = (req, res, next) => {
 };
 
 module.exports.updateAvatar = (req, res, next) => {
-  const {avatar} = req.body;
+  const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
-    {avatar},
-    {new: true, runValidators: true},
-  ).then((user) => res.send({data: user}))
+    { avatar },
+    { new: true, runValidators: true },
+  ).then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === "ValidationError") {
         next(new ValidationError("Переданы некорректные данные при обновлении аватара"));
@@ -113,21 +108,23 @@ module.exports.updateAvatar = (req, res, next) => {
 };
 
 module.exports.login = (req, res, next) => {
-  const {email, password} = req.body;
-  return User.findOne({email}).select("+password")
+  const { email, password } = req.body;
+  return User.findOne({ email }).select("+password")
     .then((user) => {
       if (!user) {
         next(new UnauthorizedError("Неправильные почта или пароль"));
       } else {
         bcrypt.compare(password, user.password).then((result) => {
           if (result) {
-            const token = jwt.sign({_id: user._id},
-              process.env.NODE_ENV === 'production' ? process.env.JWT_SECRET
-                : 'some-secret-key',
-              { expiresIn: '7d' });
+            const token = jwt.sign(
+              { _id: user._id },
+              process.env.NODE_ENV === "production" ? process.env.JWT_SECRET
+                : "some-secret-key",
+              { expiresIn: "7d" },
+            );
 
             res.cookie(JWT_KEY, token, JWT_OPTIONS);
-            res.status(200).send({message: "success"});
+            res.status(200).send({ message: "success" });
           } else {
             next(new UnauthorizedError("Неправильные почта или пароль"));
           }
@@ -142,13 +139,12 @@ module.exports.login = (req, res, next) => {
 module.exports.logout = (req, res) => {
   res.clearCookie(JWT_KEY, JWT_OPTIONS);
   res.end();
-}
+};
 
 module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id).then((user) => {
-    res.send({data: user})
-    }
-  )
+    res.send({ data: user });
+  })
     .catch((err) => {
       if (err.name === "ValidationError") {
         next(new ValidationError("Невалидный id"));

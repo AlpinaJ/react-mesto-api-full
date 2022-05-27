@@ -31,22 +31,20 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
+    .orFail(() => {
+      next(new ErrorNotFound("Карточка с указанным _id не найдена"));
+    })
     .then((card) => {
-      if (card) {
-        if (card.owner.toString() === req.user._id) {
-          return Card.findByIdAndDelete(req.params.cardId).then(() => res.send({
-            name: card.name,
-            link: card.link,
-            owner: card.owner,
-            likes: card.likes,
-            _id: card._id,
-          }));
-        }
+      if (card.owner.toString() !== req.user._id) {
         next(new ForbiddenError("Вы не можете удалить чужую карточку"));
-      } else {
-        next(new ErrorNotFound("Карточка с указанным _id не найдена"));
       }
-      return card;
+      return Card.findByIdAndDelete(req.params.cardId).then(() => res.send({
+        name: card.name,
+        link: card.link,
+        owner: card.owner,
+        likes: card.likes,
+        _id: card._id,
+      }));
     })
     .catch((err) => {
       if (err.name === "CastError") {
